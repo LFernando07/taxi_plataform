@@ -3,14 +3,25 @@ import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
 @Injectable()
 export class ParseKmPipe implements PipeTransform {
   transform(value: any) {
-    const km = Number(value);
-
-    if (isNaN(km)) {
-      throw new BadRequestException('El valor de km debe ser un número');
+    if (typeof value !== 'string') {
+      throw new BadRequestException(
+        'La distancia debe ser un string como "12 km"',
+      );
     }
 
-    if (km <= 0) {
-      throw new BadRequestException('Los kilómetros deben ser mayores a 0');
+    // Extraer número de la cadena
+    const match = value.match(/[\d.]+/);
+
+    if (!match) {
+      throw new BadRequestException(
+        'No se pudo obtener un número válido para los km',
+      );
+    }
+
+    const km = parseFloat(match[0]);
+
+    if (isNaN(km) || km <= 0) {
+      throw new BadRequestException('La distancia debe ser mayor a 0');
     }
 
     return km;

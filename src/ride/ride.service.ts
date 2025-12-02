@@ -25,7 +25,7 @@ export class RideService {
     // Verificar que el usuario tenga rol de user...
     if (user.role !== Role.User.toString()) {
       throw new NotAcceptableException(
-        'Solo los usuarios pueden crear viajes viajes.',
+        'Solo los usuarios pueden crear viajes.',
       );
     }
 
@@ -38,7 +38,20 @@ export class RideService {
   }
 
   async listMyRides(user: User) {
-    const rides = await this.rideRepository.find({ where: { user } });
+    let rides: Array<Ride>;
+
+    if (user.role === Role.Driver.toString()) {
+      throw new NotAcceptableException(
+        'Los conductores no puede listar viajes.',
+      );
+    }
+
+    if (user.role === Role.Admin.toString()) {
+      rides = await this.rideRepository.find();
+    } else {
+      rides = await this.rideRepository.find({ where: { user } });
+    }
+
     if (!rides || rides.length === 0)
       throw new NotFoundException(`Rides by: ${user.name}  not found`);
 
@@ -46,7 +59,13 @@ export class RideService {
   }
 
   async getRide(user: User, rideId: number) {
-    const ride = await this.rideRepository.find({
+    if (user.role !== Role.User.toString()) {
+      throw new NotAcceptableException(
+        'Solo los usuarios pueden ver sus viajes.',
+      );
+    }
+
+    const ride = await this.rideRepository.findOne({
       where: { id: rideId, user },
     });
 
@@ -72,7 +91,7 @@ export class RideService {
     // el usuario sea de tipo "drive" para aceptar
     const isDriver = user.role === Role.Driver.toString();
     // El conductor este libre para aceptar el viaje
-    const isAvailableDriver = user.driverProfile.available;
+    const isAvailableDriver = user.driverProfile?.available;
     if (!isDriver) {
       throw new NotAcceptableException(
         'Solo un conductor puede aceptar viajes',
@@ -102,9 +121,11 @@ export class RideService {
       async (transactionalEntityManager) => {
         try {
           ride.status = 'assigned';
-          ride.driver = user.driverProfile;
+          if (user.driverProfile) ride.driver = user.driverProfile;
 
-          user.driverProfile.available = false;
+          if (user.driverProfile) {
+            user.driverProfile.available = false;
+          }
           await transactionalEntityManager.save(ride);
           await transactionalEntityManager.save(user.driverProfile);
 
@@ -132,10 +153,10 @@ export class RideService {
     }
 
     // Validaciones de negocio
-    const isAssigned = ride.status === 'assigned';
-    const driverIsSame = ride.driver?.id === user.driverProfile.id;
     const isDriver = user.role === Role.Driver.toString();
-    const driverIsBusy = user.driverProfile.available === false;
+    const isAssigned = ride.status === 'assigned';
+    const isSameDriver = ride.driver?.id === user.driverProfile?.id;
+    const isBusy = user.driverProfile?.available === false;
 
     if (!isDriver) {
       throw new NotAcceptableException(
@@ -149,13 +170,13 @@ export class RideService {
       );
     }
 
-    if (!driverIsSame) {
+    if (!isSameDriver) {
       throw new NotAcceptableException(
         'No puedes completar un viaje que no te fue asignado',
       );
     }
 
-    if (!driverIsBusy) {
+    if (!isBusy) {
       throw new NotAcceptableException(
         'No puedes completar viajes porque actualmente estás disponible',
       );
@@ -166,7 +187,7 @@ export class RideService {
       async (transactionalEntityManager) => {
         try {
           ride.status = 'completed';
-          user.driverProfile.available = true;
+          if (user.driverProfile) user.driverProfile.available = true;
 
           await transactionalEntityManager.save(ride);
           await transactionalEntityManager.save(user.driverProfile);
@@ -187,7 +208,7 @@ export class RideService {
     // Buscar el viaje
     const ride = await this.rideRepository.findOne({
       where: { id: rideId },
-      relations: ['driver'],
+      relations: ['user', 'driver'],
     });
 
     if (!ride) {
@@ -195,10 +216,10 @@ export class RideService {
     }
 
     // Validaciones principales
-    const isPending = ride.status === 'pending';
     const isDriver = user.role === Role.Driver.toString();
-    const isAvailableDriver = user.driverProfile.available === true;
+    const isPending = ride.status === 'pending';
     const rideHasNoDriver = ride.driver === null;
+    const isAvailableDriver = user.driverProfile?.available === true;
 
     if (!isDriver) {
       throw new NotAcceptableException(
@@ -228,7 +249,6 @@ export class RideService {
     // (No cambia estado, pero puedes incrementar métrica,
     //  bloquearlo para este chofer, etc.)
     // En este ejercicio solo devolvemos un mensaje.
-
     return {
       message: 'Has rechazado este viaje. Otros conductores podrán aceptarlo.',
       rideId: ride.id,

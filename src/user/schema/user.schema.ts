@@ -11,7 +11,7 @@ export const userSchema = z.object({
     .max(60),
   email: z.email(),
   password: z.string(),
-  role: roleEnum.default('user'),
+  role: roleEnum,
 });
 
 export const updateUserSchema = userSchema.partial();

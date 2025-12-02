@@ -4,10 +4,9 @@ import { DriverController } from './driver.controller';
 import { DatabaseModule } from '../database/database.module';
 import { driveProviders } from './driver.providers';
 import { UserModule } from '../user/user.module';
-import { RoleModule } from '../roles/roles.module';
 
 @Module({
-  imports: [DatabaseModule, UserModule, RoleModule],
+  imports: [DatabaseModule, UserModule],
   controllers: [DriverController],
   providers: [DriverService, ...driveProviders],
 })

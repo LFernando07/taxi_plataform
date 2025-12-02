@@ -14,12 +14,15 @@ export class Driver {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => User, (user) => user.driverProfile)
+  @OneToOne(() => User, (user) => user.driverProfile, { nullable: true })
   @JoinColumn()
   user: User;
 
   @Column({ default: true })
   available: boolean;
+
+  @Column({ default: true })
+  active: boolean;
 
   @OneToMany(() => Ride, (ride) => ride.driver)
   assignedRides: Ride[];

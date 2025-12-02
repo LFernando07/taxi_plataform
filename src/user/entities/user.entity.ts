@@ -22,12 +22,12 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ default: 'user' }) // user | driver | admin
+  @Column() // user | driver | admin
   role: string;
 
   // Relaciones
-  @OneToOne(() => Driver, (driver) => driver.user)
-  driverProfile: Driver;
+  @OneToOne(() => Driver, (driver) => driver.user, { nullable: true })
+  driverProfile?: Driver | null;
 
   @OneToMany(() => Ride, (ride) => ride.user)
   rides: Ride[];

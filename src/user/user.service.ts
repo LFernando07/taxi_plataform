@@ -1,10 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { repositories } from '../common/generalConstants';
 import { Repository } from 'typeorm';
+import { hashString } from '../common/utils/hash.util';
+import { Role } from '../roles/roles.enum';
 
 @Injectable()
 export class UserService {
@@ -14,20 +15,12 @@ export class UserService {
     // eslint-disable-next-line prettier/prettier
   ) { }
 
-  private async hashString(str: string): Promise<string> {
-    const saltRounds = 10; // Define the cost factor for hashing
-
-    return await bcrypt.hash(str, saltRounds);
-  }
-
   async create(
     createUserDto: CreateUserDto,
   ): Promise<Omit<User, 'driverProfile' | 'rides'>> {
-    const hashedPassword = await this.hashString(createUserDto.password);
-    const user = { ...createUserDto, password: hashedPassword };
+    const user = { ...createUserDto };
 
     const newUser = this.userRepository.create(user);
-
     return this.userRepository.save(newUser);
   }
 
@@ -64,17 +57,47 @@ export class UserService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository.findOne({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        password: true,
+        driverProfile: false,
+        rides: false,
+      },
+      where: { email },
+    });
     if (!user) throw new NotFoundException(`User not found`);
 
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.findOne(id);
-    const updatUser = this.userRepository.merge(user, updateUserDto);
+  async update(id: number, updateUserDto: UpdateUserDto, user: User) {
+    const existsUser = await this.findOne(id);
 
-    return this.userRepository.save(updatUser);
+    if (user.role !== Role.Admin.toString() && user.id !== existsUser.id) {
+      throw new NotFoundException(
+        `No tienes permisos para actualizar este usuario`,
+      );
+    }
+
+    let updatUser: User;
+    if (updateUserDto.password !== undefined) {
+      const newPassword = await hashString(updateUserDto.password);
+      console.log(newPassword);
+      updatUser = this.userRepository.merge(existsUser, {
+        ...updateUserDto,
+        password: newPassword,
+      });
+    } else {
+      updatUser = this.userRepository.merge(existsUser, updateUserDto);
+    }
+    await this.userRepository.save(updatUser);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...updateUserWithoutPassword } = updatUser;
+    return updateUserWithoutPassword;
   }
 
   async remove(id: number) {

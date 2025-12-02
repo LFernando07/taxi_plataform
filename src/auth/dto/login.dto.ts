@@ -1,9 +1,6 @@
-import { IsString } from 'class-validator';
+import { loginSchemaDto } from '../schema/auth.schema';
 
-export class LoginUserDto {
-  @IsString()
+export class LoginUserDto implements loginSchemaDto {
   email: string;
-
-  @IsString()
   password: string;
 }

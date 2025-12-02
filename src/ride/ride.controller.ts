@@ -14,6 +14,8 @@ import { createRideSchema } from './schema/ride.schema';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../user/entities/user.entity';
 import { ParseKmPipe } from '../common/pipes/parse-km.pipe';
+import { Role } from '../roles/roles.enum';
+import { Roles } from '../roles/decorators/roles.decorator';
 
 @Controller('ride')
 export class RideController {
@@ -21,31 +23,29 @@ export class RideController {
   constructor(private readonly rideService: RideService) { }
 
   // Solo usuarios
+  @Roles(Role.User)
   @Post()
   create(
     @CurrentUser() user: User,
-    @Body(new ZodValidationPipe(createRideSchema)) createRideDto: CreateRideDto,
+    @Body(new ZodValidationPipe(createRideSchema))
+    createRideDto: CreateRideDto,
+    @Body('distance', ParseKmPipe) distance: number,
   ) {
-    // Transformar aqui el 'distanceKm' y obtener el precio
-    const pipe = new ParseKmPipe();
-    const km = pipe.transform(createRideDto.distanceKm);
-
-    const price = km * 10;
-
-    // Mandamos el objeto con el disntanceKm validado y con el precio calculado
     return this.rideService.create(user, {
       ...createRideDto,
-      distanceKm: km,
-      price,
+      distanceKm: distance,
     });
   }
 
-  // Todos menos admin
+  // Todos menos driver
+  @Roles(Role.Admin, Role.User)
   @Get('me')
   listMyRides(@CurrentUser() user: User) {
     return this.rideService.listMyRides(user);
   }
 
+  // Solo User
+  @Roles(Role.User)
   @Get(':id')
   getRide(
     @CurrentUser() user: User,
@@ -55,6 +55,7 @@ export class RideController {
   }
 
   //Solo driver
+  @Roles(Role.Driver)
   @Patch(':id/accept')
   acceptRide(
     @CurrentUser() user: User,
@@ -63,6 +64,8 @@ export class RideController {
     return this.rideService.acceptRide(user, rideId);
   }
 
+  //Solo driver
+  @Roles(Role.Driver)
   @Patch(':id/completed')
   completedRide(
     @CurrentUser() user: User,
@@ -71,6 +74,8 @@ export class RideController {
     return this.rideService.completedRide(user, rideId);
   }
 
+  //Solo driver
+  @Roles(Role.Driver)
   @Patch(':id/reject')
   rejectRide(
     @CurrentUser() user: User,

@@ -3,10 +3,9 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { DatabaseModule } from '../database/database.module';
 import { userProviders } from './user.providers';
-import { RoleModule } from '../roles/roles.module';
 
 @Module({
-  imports: [DatabaseModule, RoleModule],
+  imports: [DatabaseModule],
   controllers: [UserController],
   providers: [...userProviders, UserService],
   exports: [UserService],

@@ -15,42 +15,53 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { createDriverSchema, updateDriverSchema } from './schema/driver.schema';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../user/entities/user.entity';
+import { Role } from '../roles/roles.enum';
+import { Roles } from '../roles/decorators/roles.decorator';
 
 @Controller('driver')
 export class DriverController {
   // eslint-disable-next-line prettier/prettier
   constructor(private readonly driverService: DriverService) { }
 
+  @Roles(Role.Admin, Role.User)
   @Get()
-  findAvailables() {
-    return this.driverService.findAvailables();
+  async findAvailables() {
+    return await this.driverService.findAvailables();
   }
 
+  @Roles(Role.User)
   @Post('register')
-  register(
+  async register(
     @CurrentUser() user: User,
     @Body(new ZodValidationPipe(createDriverSchema))
     createDriverDto: CreateDriverDto,
   ) {
-    return this.driverService.register(user.id, createDriverDto);
+    return await this.driverService.register(user.id, createDriverDto);
   }
 
+  @Roles(Role.Admin, Role.Driver)
   @Get(':id')
-  findOne(@Param('id', new ParseIntPipe()) id: number) {
-    return this.driverService.findOne(+id);
+  async findOne(
+    @CurrentUser() user: User,
+    @Param('id', new ParseIntPipe()) id: number,
+  ) {
+    return await this.driverService.findOne(+id, user);
   }
 
+  @Roles(Role.Admin, Role.Driver)
   @Patch(':id')
-  update(
+  async update(
+    @CurrentUser() user: User,
     @Param('id', new ParseIntPipe()) id: number,
     @Body(new ZodValidationPipe(updateDriverSchema))
     updateDriverDto: UpdateDriverDto,
   ) {
-    return this.driverService.update(+id, updateDriverDto);
+    return await this.driverService.update(+id, updateDriverDto, user);
   }
 
+  @Roles(Role.Admin)
   @Delete(':id')
-  remove(@Param('id', new ParseIntPipe()) id: number) {
-    return this.driverService.remove(+id);
+  async remove(@Param('id', new ParseIntPipe()) id: number) {
+    return await this.driverService.remove(+id);
   }
 }

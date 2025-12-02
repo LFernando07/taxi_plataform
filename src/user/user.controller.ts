@@ -16,6 +16,8 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from './entities/user.entity';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { updateUserSchema, userSchema } from './schema/user.schema';
+import { Roles } from '../roles/decorators/roles.decorator';
+import { Role } from '../roles/roles.enum';
 
 @Controller('user')
 export class UserController {
@@ -24,13 +26,14 @@ export class UserController {
 
   @Post()
   @UsePipes(new ZodValidationPipe(userSchema))
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    return await this.userService.create(createUserDto);
   }
 
+  @Roles(Role.Admin)
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  async findAll() {
+    return await this.userService.findAll();
   }
 
   // Error: Siempre ordenar las rutas de referencia sobre las que tienen parametros
@@ -40,21 +43,24 @@ export class UserController {
     return user;
   }
 
+  @Roles(Role.Admin)
   @Get(':id')
-  findOne(@Param('id', new ParseIntPipe()) id: number) {
-    return this.userService.findOne(+id);
+  async findOne(@Param('id', new ParseIntPipe()) id: number) {
+    return await this.userService.findOne(+id);
   }
 
   @Patch(':id')
-  update(
+  async update(
+    @CurrentUser() user: User,
     @Param('id', new ParseIntPipe()) id: number,
     @Body(new ZodValidationPipe(updateUserSchema)) updateUserDto: UpdateUserDto,
-  ) {
-    return this.userService.update(+id, updateUserDto);
+  ): Promise<Omit<User, 'driverProfile' | 'rides' | 'password'>> {
+    return await this.userService.update(+id, updateUserDto, user);
   }
 
+  @Roles(Role.Admin)
   @Delete(':id')
-  remove(@Param('id', new ParseIntPipe()) id: number) {
-    return this.userService.remove(+id);
+  async remove(@Param('id', new ParseIntPipe()) id: number) {
+    return await this.userService.remove(+id);
   }
 }

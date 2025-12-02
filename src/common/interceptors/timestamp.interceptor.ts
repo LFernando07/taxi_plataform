@@ -22,6 +22,6 @@ export class TimestampInterceptor<T>
     next: CallHandler,
   ): Observable<Response<T>> {
     const now = Date.now();
-    return next.handle().pipe(map((data) => ({ data, timestamp: ` ${Date.now() - now}ms` })));
+    return next.handle().pipe(map((data) => ({ data, timestamp: `${Date.now() - now}ms` })));
   }
 }
