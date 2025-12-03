@@ -21,7 +21,7 @@ export const createRideSchema = z.object({
         'El nombre del destino debe tener una logitud de 3 a 80 caracteres',
     })
     .max(80),
-  distanceKm: z.float32(),
+  distanceKm: z.string(),
   status: statusEnum.default('pending'),
 });
 

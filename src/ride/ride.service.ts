@@ -11,12 +11,14 @@ import { Ride } from './entities/ride.entity';
 import { User } from '../user/entities/user.entity';
 import { Role } from '../roles/roles.enum';
 import { DatabaseException } from '../common/exceptions/database.exception';
+import { DriverService } from '../driver/driver.service';
 
 @Injectable()
 export class RideService {
   constructor(
     @Inject(repositories.providers.ride)
     private rideRepository: Repository<Ride>,
+    private driverService: DriverService,
     // eslint-disable-next-line prettier/prettier
   ) { }
 
@@ -28,28 +30,32 @@ export class RideService {
         'Solo los usuarios pueden crear viajes.',
       );
     }
+    const dataRide = {
+      ...createRideDto,
+      price: parseFloat((createRideDto.distanceKm * 10).toFixed(2)),
+    };
 
     const newRide = this.rideRepository.create({
-      user: user,
-      ...createRideDto,
+      user,
+      ...dataRide,
     });
 
     return this.rideRepository.save(newRide);
   }
 
-  async listMyRides(user: User) {
+  async listMyRides(user: User): Promise<Ride[]> {
     let rides: Array<Ride>;
-
-    if (user.role === Role.Driver.toString()) {
-      throw new NotAcceptableException(
-        'Los conductores no puede listar viajes.',
-      );
-    }
 
     if (user.role === Role.Admin.toString()) {
       rides = await this.rideRepository.find();
+    } else if (user.role === Role.Driver.toString()) {
+      rides = await this.rideRepository.find({
+        where: { driver: { user: { id: user.id } } },
+      });
     } else {
-      rides = await this.rideRepository.find({ where: { user } });
+      rides = await this.rideRepository.find({
+        where: { user: { id: user.id } },
+      });
     }
 
     if (!rides || rides.length === 0)
@@ -64,12 +70,16 @@ export class RideService {
         'Solo los usuarios pueden ver sus viajes.',
       );
     }
-
     const ride = await this.rideRepository.findOne({
-      where: { id: rideId, user },
+      where: { id: rideId, user: { id: user.id } },
+      relations: ['user'],
     });
-
     if (!ride) throw new NotFoundException(`Ride ${rideId} not found`);
+
+    if (user.id !== ride?.user.id)
+      throw new NotAcceptableException(
+        'No puedes listar los viajes de otros usuarios.',
+      );
 
     return ride;
   }
@@ -78,12 +88,13 @@ export class RideService {
     // Status del viaje en "pendiente" para poder pasarlo a aceptado
     const ride = await this.rideRepository.findOne({
       where: { id: rideId },
-      relations: ['driver', 'user'],
+      relations: ['user', 'driver'],
     });
 
     if (!ride) {
       throw new NotFoundException(`Ride #${rideId} not found`);
     }
+
     // Verificar si el viaje esta pendiente
     const isPending = ride.status === 'pending';
     // Verificar que el driver este vacio
@@ -108,11 +119,17 @@ export class RideService {
       );
     }
 
-    if (!isAvailableDriver) {
+    if (isAvailableDriver) {
       throw new NotAcceptableException(
         'No puedes aceptar viajes porque estás ocupado',
       );
     }
+
+    const driverProfile = await this.driverService.findOneByUserId(
+      user.id,
+      user,
+    );
+    user.driverProfile = driverProfile;
 
     // cambiar el status del viaje a "asignado"
     // cambiar la disponibilidad del chofer
@@ -152,11 +169,18 @@ export class RideService {
       throw new NotFoundException(`Ride #${rideId} not found`);
     }
 
+    const driverProfile = await this.driverService.findOneByUserId(
+      user.id,
+      user,
+    );
+    user.driverProfile = driverProfile;
+
     // Validaciones de negocio
     const isDriver = user.role === Role.Driver.toString();
     const isAssigned = ride.status === 'assigned';
     const isSameDriver = ride.driver?.id === user.driverProfile?.id;
     const isBusy = user.driverProfile?.available === false;
+    console.log(isSameDriver);
 
     if (!isDriver) {
       throw new NotAcceptableException(
@@ -215,6 +239,12 @@ export class RideService {
       throw new NotFoundException(`Ride #${rideId} not found`);
     }
 
+    const driverProfile = await this.driverService.findOneByUserId(
+      user.id,
+      user,
+    );
+    user.driverProfile = driverProfile;
+
     // Validaciones principales
     const isDriver = user.role === Role.Driver.toString();
     const isPending = ride.status === 'pending';
@@ -253,5 +283,15 @@ export class RideService {
       message: 'Has rechazado este viaje. Otros conductores podrán aceptarlo.',
       rideId: ride.id,
     };
+  }
+
+  async remove(id: number) {
+    const result = await this.rideRepository.delete(id);
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Ride #${id} not found`);
+    }
+
+    return true;
   }
 }

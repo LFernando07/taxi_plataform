@@ -32,7 +32,7 @@ export class UserService {
         email: true,
         role: true,
         password: false,
-        driverProfile: false,
+        driverProfile: true,
         rides: false,
       },
     });
@@ -46,7 +46,7 @@ export class UserService {
         email: true,
         role: true,
         password: false,
-        driverProfile: false,
+        driverProfile: true,
         rides: false,
       },
       where: { id },

@@ -95,6 +95,33 @@ export class DriverService {
     return driver;
   }
 
+  async findOneByUserId(id: number, user: User) {
+    // Si el usuario es admin puede ver cualquier perfil del conductor
+    // Si el usuario es driver solo puede ver su informacion
+    const driver = await this.driverRepository.findOne({
+      where: { user: { id } },
+      relations: ['user'],
+    });
+
+    if (!driver)
+      throw new NotFoundException(
+        `El conductor con el id ${id} no se encontro`,
+      );
+
+    if (user.role === Role.Driver.toString() && driver?.user.id !== user.id) {
+      throw new NotFoundException(
+        `No tienes permisos para ver este perfil de conductor`,
+      );
+    }
+
+    // De otro modo devolver la informacion la informacion
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...driverData } = driver.user;
+    driver.user = driverData as User;
+
+    return driver;
+  }
+
   async update(id: number, updateDriverDto: UpdateDriverDto, user: User) {
     const driver = await this.findOne(id, user);
     if (!driver)

@@ -9,6 +9,7 @@ import { UserModule } from '../user/user.module';
   imports: [DatabaseModule, UserModule],
   controllers: [DriverController],
   providers: [DriverService, ...driveProviders],
+  exports: [DriverService],
 })
 // eslint-disable-next-line prettier/prettier
 export class DriverModule { }

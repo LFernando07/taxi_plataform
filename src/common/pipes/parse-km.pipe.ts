@@ -2,7 +2,7 @@ import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class ParseKmPipe implements PipeTransform {
-  transform(value: any) {
+  transform(value: string) {
     if (typeof value !== 'string') {
       throw new BadRequestException(
         'La distancia debe ser un string como "12 km"',
@@ -23,7 +23,6 @@ export class ParseKmPipe implements PipeTransform {
     if (isNaN(km) || km <= 0) {
       throw new BadRequestException('La distancia debe ser mayor a 0');
     }
-
     return km;
   }
 }

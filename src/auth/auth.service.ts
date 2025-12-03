@@ -16,14 +16,12 @@ export class AuthService {
 
   signIn = async (loginUserDto: LoginUserDto) => {
     const user = await this.usersService.findOneByEmail(loginUserDto.email);
-    console.log(user, 'user-auth');
     //Nos traemos todo el usuario con password hasheada
     // Verificamos la coincidencia para autorizar token
     const isMatch = await compareWithHashString(
       loginUserDto.password,
       user.password,
     );
-    console.log(isMatch, 'user match');
     if (!isMatch) {
       throw new UnauthorizedException();
     }
