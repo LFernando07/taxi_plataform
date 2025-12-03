@@ -1,79 +1,129 @@
 🚖 Taxi Platform – Backend API
 
-Sistema backend desarrollado con NestJS para la gestión de una plataforma de taxis.
-Incluye autenticación con JWT, manejo de roles (user, driver, admin), gestión de viajes, vehículos y usuarios, y documentación con Swagger.
+API backend para la gestión completa de una plataforma de taxis, construida con NestJS.
+Incluye autenticación JWT, manejo de roles (user, driver, admin), administración de conductores, vehículos y viajes, y documentación integrada con Swagger.
 
-<p align="center"> <a href="http://nestjs.com/" target="blank"> <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /> </a> </p>
-📌 Descripción del Proyecto
+✨ Características principales
 
-Este repositorio contiene el backend de una plataforma de taxis, construido con NestJS + TypeScript, diseñado para ser:
+- Autenticación con JWT
 
-Escalable
+- Sistema de roles: user, driver, admin
 
-Modular
+- Gestión de usuarios
 
-Seguro
+- Gestión de conductores
 
-Fácil de mantener
+- Gestión de vehículos
 
-Funcionalidades principales
+- Creación y seguimiento de viajes
 
-✔ Registro e inicio de sesión con JWT
-✔ Roles de usuario (user, driver, admin)
-✔ Gestión de usuarios y conductores
-✔ Gestión de vehículos
-✔ Creación y consulta de viajes
-✔ Validación con DTOs
-✔ Documentación interactiva con Swagger
-✔ Arquitectura modular siguiendo buenas prácticas de NestJS
+- Validación por DTOs
 
-🛠️ Tecnologías Utilizadas
+- Arquitectura modular de NestJS
 
-NestJS – Framework principal
+- Documentación automática con Swagger
 
-TypeScript
+- Buenas prácticas de estructura y organización del código
 
-JWT Authentication
+👨‍💻 Tecnologías utilizadas
 
-Prisma u otro ORM (si aplica)
+- NestJS
 
-Swagger para documentación
+- TypeScript
 
-PNPM como manejador de paquetes
+- JWT Authentication
 
-📁 Estructura del Proyecto
+- TypeORM
 
-<details> <summary><strong>📦 Ver estructura del proyecto</strong></summary>
-src/
-├── auth/           # Autenticación y JWT
-├── user/           # Usuarios y roles
-├── driver/         # Conductores
-├── ride/           # Vehículos
-├── roles/          # Roles del sistema
-├── common/         # Decoradores, interceptores, pipes
-├── app.module.ts
-└── main.ts         # Punto de entrada
+- PostgreSQL
+
+- Swagger
+
+- PNPM
+
+<details> <summary><b>📦 Estructura del proyecto</b></summary>
+taxi_plataform/
+├── src/
+│   ├── auth/           # Autenticación y JWT
+│   ├── user/           # Usuarios y perfiles
+│   ├── driver/         # Conductores
+│   ├── ride/           # Vehículos
+│   ├── roles/          # Sistema de roles
+│   ├── common/         # Decoradores / Interceptores / Pipes / Exceptions
+│   ├── app.module.ts
+│   └── main.ts         # Punto de entrada
+├── test/               # Pruebas unitarias y e2e
+├── .env.example
+├── package.json
+├── pnpm-lock.yaml
+└── README.md
 
 </details>
+🧰 Get Started
+⚙️ Requisitos previos
 
-Cada módulo incluye controllers, services, DTOs, y esquemas, con una arquitectura totalmente modularizada.
+📌 Backend
+Debes declarar en un archivo .env:
 
-🚀 Instalación
+JWT_SECRET
+
+JWT_EXPIRES
+
+DATABASE_URL (si usas Prisma)
+
+Si trabajas con ORM Prisma, recuerda ejecutar:
+
+pnpm prisma generate
+pnpm prisma migrate dev
+
+🪛 Instalación
+
+Paso 1 — Clona el repositorio
+
+git clone https://github.com/LFernando07/taxi_plataform.git
+
+Paso 2 — Instala dependencias
+
 pnpm install
 
-▶️ Ejecutar el Proyecto
-
-# Modo desarrollo
+Paso 3 — Ejecuta el servidor en modo desarrollo
 
 pnpm run start:dev
 
-# Ejecución normal
+El backend estará disponible en:
 
-pnpm run start
+👉 http://localhost:3000
 
-# Producción
+📄 Documentación Swagger
 
-pnpm run start:prod
+Una vez iniciado el servidor, accede a:
+
+👉 http://localhost:3000/api
+
+Aquí verás todos los endpoints de:
+
+- Autenticación
+
+- Usuarios
+
+- Conductores
+
+- Roles
+
+- Viajes
+
+🔒 Environment Variables
+
+Crea un archivo .env en la raíz:
+
+# Token
+
+JWT_SECRET=yourSecretKey
+JWT_EXPIRES=1d
+
+# DB (solo si usas prisma o base relacional)
+
+DATABASE_URL=postgresql://user:pass@localhost:5432/taxi
 
 🧪 Testing
 
@@ -81,7 +131,7 @@ pnpm run start:prod
 
 pnpm run test
 
-# End-to-end tests
+# End-to-end
 
 pnpm run test:e2e
 
@@ -89,43 +139,18 @@ pnpm run test:e2e
 
 pnpm run test:cov
 
-📄 Documentación de API (Swagger)
-
-Una vez corriendo el servidor, accede a:
-
-👉 http://localhost:3000/api
-
-Aquí podrás visualizar:
-
-Autenticación (Auth)
-
-Usuarios
-
-Conductores
-
-Vehículos
-
-Roles
-
-Viajes
-
-🔐 Roles en el Sistema
+👥 Roles del sistema
 Rol Descripción
-user Usuario que solicita viajes
-driver Conductor registrado que puede aceptar viajes
-admin Administrador con control total del sistema
-🌐 Deployment
 
-Para desplegar en producción consulta la guía oficial:
+- user Usuario normal, solicita viajes
+- driver Conductor del servicio
+- admin Acceso total y gestión completa del sistema
+  📚 Recursos útiles
 
-🔗 https://docs.nestjs.com/deployment
+Swagger UI → http://localhost:3000/api
 
-📚 Recursos Útiles
+Repo del proyecto → https://github.com/LFernando07/taxi_plataform
 
-Documentación oficial de NestJS: https://docs.nestjs.com/
+📋 Licencia
 
-Repositorio del proyecto: https://github.com/LFernando07/taxi_plataform
-
-📄 Licencia
-
-Este proyecto está licenciado bajo MIT.
+Este proyecto está bajo la licencia MIT.
